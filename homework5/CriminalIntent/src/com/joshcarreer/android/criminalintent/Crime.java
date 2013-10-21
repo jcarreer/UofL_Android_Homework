@@ -5,8 +5,9 @@ import java.util.UUID;
 public class Crime {
 	private UUID mId;
 	private String mTitle;
+	
 	public Crime() {
-		setmId(UUID.randomUUID());
+		mId = UUID.randomUUID();
 	}
 	public String getmTitle() {
 		return mTitle;
