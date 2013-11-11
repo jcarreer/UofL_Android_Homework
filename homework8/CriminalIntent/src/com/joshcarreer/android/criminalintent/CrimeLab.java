@@ -52,6 +52,11 @@ public class CrimeLab {
     public ArrayList<Crime> getCrimes() {
         return mCrimes;
     }
+    
+    public void deleteCrime(Crime c) {
+        mCrimes.remove(c);
+        saveCrimes();
+    }
 
     public boolean saveCrimes() {
         try {
