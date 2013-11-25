@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 
 import com.bignerdranch.android.criminalintent.R;
+import com.bignerdranch.android.criminalintent.android;
 
 import android.app.Activity;
 import android.app.AlertDialog;

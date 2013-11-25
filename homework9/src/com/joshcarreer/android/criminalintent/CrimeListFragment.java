@@ -3,6 +3,7 @@ package com.joshcarreer.android.criminalintent;
 import java.util.ArrayList;
 
 import com.bignerdranch.android.criminalintent.R;
+import com.bignerdranch.android.criminalintent.android;
 
 import android.annotation.TargetApi;
 import android.content.Intent;

@@ -4,11 +4,13 @@ import java.util.Date;
 import java.util.UUID;
 
 import com.bignerdranch.android.criminalintent.R;
+import com.bignerdranch.android.criminalintent.android;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -26,17 +28,21 @@ import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 
 public class CrimeFragment extends Fragment {
     public static final String EXTRA_CRIME_ID = "criminalintent.CRIME_ID";
     private static final String DIALOG_DATE = "date";
+    private static final String DIALOG_IMAGE = "image";
     private static final int REQUEST_DATE = 0;
+    private static final int REQUEST_PHOTO = 1;
 
     Crime mCrime;
     EditText mTitleField;
     Button mDateButton;
     CheckBox mSolvedCheckBox;
     ImageButton mPhotoButton;
+    ImageView mPhotoView;
 
     public static CrimeFragment newInstance(UUID crimeId) {
         Bundle args = new Bundle();
@@ -66,7 +72,7 @@ public class CrimeFragment extends Fragment {
     @TargetApi(11)
     public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_crime, parent, false);
-  
+ 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             getActivity().getActionBar().setDisplayHomeAsUpEnabled(true);
         }
@@ -99,7 +105,7 @@ public class CrimeFragment extends Fragment {
                 dialog.show(fm, DIALOG_DATE);
             }
         });
-
+        
         mSolvedCheckBox = (CheckBox)v.findViewById(R.id.crime_solved);
         mSolvedCheckBox.setChecked(mCrime.isSolved());
         mSolvedCheckBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
@@ -108,13 +114,13 @@ public class CrimeFragment extends Fragment {
                 mCrime.setSolved(isChecked);
             }
         });
-        
+
         mPhotoButton = (ImageButton)v.findViewById(R.id.crime_imageButton);
         mPhotoButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 // launch the camera activity
                 Intent i = new Intent(getActivity(), CrimeCameraActivity.class);
-                startActivity(i);
+                startActivityForResult(i, REQUEST_PHOTO);
             }
         });
         
@@ -125,9 +131,51 @@ public class CrimeFragment extends Fragment {
             mPhotoButton.setEnabled(false);
         }
 
+        mPhotoView = (ImageView)v.findViewById(R.id.crime_imageView);
+        mPhotoView.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Photo p = mCrime.getPhoto();
+                if (p == null) 
+                    return;
+
+                FragmentManager fm = getActivity()
+                    .getSupportFragmentManager();
+                String path = getActivity()
+                    .getFileStreamPath(p.getFilename()).getAbsolutePath();
+                ImageFragment.createInstance(path)
+                    .show(fm, DIALOG_IMAGE);
+            }
+        });
+        
+        
         return v; 
     }
+    
+    private void showPhoto() {
+        // (re)set the image button's image based on our photo
+        Photo p = mCrime.getPhoto();
+        BitmapDrawable b = null;
+        if (p != null) {
+            String path = getActivity()
+                .getFileStreamPath(p.getFilename()).getAbsolutePath();
+            b = PictureUtils.getScaledDrawable(getActivity(), path);
+        }
+        mPhotoView.setImageDrawable(b);
+    }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        showPhoto();
+    }
+    
+    @Override
+    public void onStop() {
+        super.onStop();
+        PictureUtils.cleanImageView(mPhotoView);
+    }
+
+    
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode != Activity.RESULT_OK) return;
@@ -135,9 +183,18 @@ public class CrimeFragment extends Fragment {
             Date date = (Date)data.getSerializableExtra(DatePickerFragment.EXTRA_DATE);
             mCrime.setDate(date);
             updateDate();
+        } else if (requestCode == REQUEST_PHOTO) {
+            // create a new Photo object and attach it to the crime
+            String filename = data
+                .getStringExtra(CrimeCameraFragment.EXTRA_PHOTO_FILENAME);
+            if (filename != null) {
+                Photo p = new Photo(filename);
+                mCrime.setPhoto(p);
+                showPhoto();
+            }
         }
     }
-
+    
     @Override
     public void onPause() {
         super.onPause();
@@ -155,6 +212,3 @@ public class CrimeFragment extends Fragment {
         } 
     }
 }
-
-
-
